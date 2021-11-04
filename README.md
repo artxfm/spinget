@@ -16,7 +16,11 @@ Download show audio from WXOX spinitron.
 The above invocation gets `1` hour of audio starting at midnight (`00:00`) on
 November 4th, 2021 (`11/04/2021`).
 
-Note that this probably will not work properly across a date boundry.
+
+## Issues
+
+- This probably will not work properly across a date boundry.
+- Audio is only available for two weeks from air date.
 
 
 ## Contribute
