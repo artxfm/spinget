@@ -1,5 +1,14 @@
 # spinget
 
+
+**BROKEN RIGHT NOW SORRY**
+
+They have switched to a new format/system and this script has not yet been updated.
+
+
+
+# (OLD README)
+
 Download show audio from WXOX spinitron.
 
 
