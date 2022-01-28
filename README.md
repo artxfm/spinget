@@ -1,14 +1,5 @@
 # spinget
 
-
-**BROKEN RIGHT NOW SORRY**
-
-They have switched to a new format/system and this script has not yet been updated.
-
-
-
-# (OLD README)
-
 Download show audio from WXOX spinitron.
 
 
@@ -34,6 +25,7 @@ November 4th, 2021 (`11/04/2021`).
 
 - This probably will not work properly across a date boundry.
 - Audio is only available for two weeks from air date.
+- This generates intermediate files in the current working directory.
 
 
 ## Contribute
