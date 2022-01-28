@@ -2,45 +2,72 @@
 
 # usage:
 #
-#  spinget.py 11/20/2021 10:00
-#     capture show starting at 10:00pm on November 20, 2021.
+#  spinget.py 11/20/2021 10:00 1
+#     capture 1 hour show starting at 10:00pm on November 20, 2021.
 #
 # Requires python3 and:
 #   - requests `pip install requests`
 #   - m3u8 `pip instrall m3u8`
 #
+# Requires ffmpeg
+#
 # version 2, by mathias for WXOX
 
 
 import argparse
-import sys
-import os
 from datetime import datetime, date, time, timezone, timedelta
-import requests
+import os
+import subprocess
+import sys
+
 import m3u8
+import requests
+
 
 
 INDEXURL="https://ark2.spinitron.com/ark2/WXOX-{0}/index.m3u8" # pass in UTC timestamp
 
 
+# Pass (segment_number, segment_uri), returns a unique filename.
 def segtofile(n, seguri):
     chunkID = seguri.split("/")[-1]
     return "wxox_%0.5d_%s.tmp.mpeg" % (n, chunkID)
 
 
+# Given list of downloaded segments `seglist`, concatenate them into a file
+# named `output`. If `rm` is set True then also delete the downloaded segments
+# if concatenation succeeds.  Returns True on success.
 def concat(seglist, output, rm):
-    print("concatenating %d segments..." % len(seglist))
-    with open(output, 'wb') as fdout:
+    print("creating index file for %d segments..." % len(seglist))
+    # First build an index file
+    indexfn = "{0}.index".format(output)
+    with open(indexfn, 'w') as fdout:
         n = 0
         for seguri in seglist:
             n = n + 1
             fn = segtofile(n, seguri)
-            with open(fn, 'rb') as fdin:
-                fdout.write(fdin.read())
-            if rm:
-                os.remove(fn)
+            fdout.write("file {0}\n".format(fn))
+
+    # Then get ffmpeg to do the work:
+    print("concatenating with ffmpeg...")
+    ffproc = subprocess.run(["ffmpeg", "-f", "concat", "-safe", "0", "-i", "{0}".format(indexfn),  "-c", "copy", output],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    if ffproc.returncode != 0:
+        print("ffmpeg run failed:")
+        print(ffproc.stdout)
+        return False
+    if rm:
+        print("cleaning up")
+        n = 0
+        for seguri in seglist:
+            n = n + 1
+            os.remove(segtofile(n, seguri))
+        os.remove(indexfn)
+    return True
+
 
 # Takes a list of segment URIs and dowloads them one at a time.
+# Return True on success.
 def download(seglist):
     n = 0
     for seguri in seglist:
@@ -59,7 +86,7 @@ def download(seglist):
 
 
 # Given string format of time from user, convert to a real datetime object in
-# UTC zone.
+# UTC zone and return that.
 def makets(t):
     localstamp  = datetime.strptime(t, "%m/%d/%Y %H:%M")
     tt = localstamp.timetuple()
@@ -102,14 +129,11 @@ def loadsegs(stamp, hours):
     return segs
 
 
-
-
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('date', metavar='MM/DD/YYYY', help='The show date')
 parser.add_argument('time', metavar="HH:MM", help='Starting time')
-parser.add_argument('count', type=int, metavar="N", help="hours")
+parser.add_argument('count', type=int, metavar="N", help="hours (1 or 2)")
+parser.add_argument('--keep', dest='keep', action='store_const', const=True, help="keep intermediate files around")
 args = parser.parse_args()
 
 hours = args.count
@@ -124,12 +148,12 @@ print("show start is {0}".format(showID))
 
 outfile = "wxox_{0}_{1}h.mpeg".format(showID, hours)
 
-
 seglist = loadsegs(utcs, hours)
 if len(seglist) > 0:
     print("downloading {0} segments...".format(len(seglist)))
     if download(seglist):
-        concat(seglist, outfile, True) # set False to leave the downloaded files.
+        if concat(seglist, outfile, not(args.keep)):
+            print("done!")
 
 
 

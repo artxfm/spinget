@@ -5,11 +5,15 @@ Download show audio from WXOX spinitron.
 
 ## How to run
 
-1. Install requests:
+1. Make sure you have ffmpeg installed.
+
+
+2. Install python pre-requisites:
     
      pip3 install requests
+     pip3 install m3u8
     
-2. Get show audio, eg:
+3. Get show audio, eg:
 
     ./spinget.py 11/04/2021 00:00 1
 
