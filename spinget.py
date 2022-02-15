@@ -73,11 +73,14 @@ def download(seglist):
     for seguri in seglist:
         n = n + 1
         print("fetch seg %d/%d  %s" % (n, len(seglist), seguri))
+        chunkFile = segtofile(n, seguri)        
+        if os.path.exists(chunkFile):
+            print("--> using cached: {0}".format(chunkFile))
+            continue
         r = requests.get(seguri, stream=True)
         if r.status_code != requests.codes.ok:
             print("  * request failed: {0}".format(r.status_code))
             return False
-        chunkFile = segtofile(n, seguri)
         # print("  output to: {0}".format(chunkFile))
         with open(chunkFile, 'wb') as fd:
             for chunk in r.iter_content(chunk_size=128):
@@ -118,13 +121,17 @@ def loadsegs(stamp, hours):
                 break
             segs.append(seg.uri)
             total_secs = total_secs + seg.duration
+            accum = accum + seg.duration
+            if accum >= required:
+                # we have enough seconds.
+                break
         if total_secs == 0:
             print("playlist has no content")
             return []
-        accum = accum + total_secs
-        print(" --> has {0} seconds (need {1})".format(total_secs, required - accum))
         if accum >= required:
             break
+        else:
+            print(" --> has {0} seconds (need {1} more)".format(total_secs, required - accum))
         curts = curts + timedelta(minutes=30) # grab index starting at next half hour
     return segs
 
@@ -139,6 +146,7 @@ args = parser.parse_args()
 hours = args.count
 if hours > 2 or hours < 1:
     print("hours must be 1 or 2")
+    sys.exit(1)
 
 timestamp = "{0} {1}".format(args.date, args.time)
 utcs = makets(timestamp)
@@ -146,7 +154,7 @@ utcs = makets(timestamp)
 showID = utcs.strftime("%Y%m%dT%H%M00Z")
 print("show start is {0}".format(showID))
 
-outfile = "wxox_{0}_{1}h.mpeg".format(showID, hours)
+outfile = "wxox_{0}_{1}h.mp4".format(showID, hours)
 
 seglist = loadsegs(utcs, hours)
 if len(seglist) > 0:
