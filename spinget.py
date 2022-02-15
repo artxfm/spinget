@@ -11,7 +11,7 @@
 #
 # Requires ffmpeg
 #
-# version 2, by mathias for WXOX
+# version 2.1, by mathias for WXOX
 
 
 import argparse
