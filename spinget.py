@@ -25,7 +25,7 @@ import requests
 
 
 
-INDEXURL="https://ark2.spinitron.com/ark2/WXOX-{0}/index.m3u8" # pass in UTC timestamp
+INDEXURL="https://ark3.spinitron.com/ark2/WXOX-{0}/index.m3u8" # pass in UTC timestamp
 
 
 # Pass (segment_number, segment_uri), returns a unique filename.
